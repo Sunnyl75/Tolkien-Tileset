@@ -6,6 +6,7 @@
 - `terrain-shallow.png`: approved marsh strokes and dots foreground with transparency.
 - `terrain-mountain.png`: approved dark ink mountain foreground with chalk-white ridge highlights and transparency.
 - `terrain-water.png`: approved six large quill-ink ripples with transparency, designed for readability when zoomed out.
+- `terrain-rapids.png`: approved choppy quill-ink ripples with eight bold boulders, including rocks in the open gaps; transparent foreground, 1254 × 1254 pixels.
 - `terrain-brush.png`: approved low, open quill-ink scrub clumps with transparency.
 - `terrain-city.png`: approved smaller, widely scattered quill-ink cobblestone outlines with transparency, 1254 × 1254 pixels.
 - `terrain-indoors.png`: approved horizontal quill-ink floorboard seams with staggered joints and transparency, 1254 × 1254 pixels.
