@@ -1,0 +1,57 @@
+name: Build Tolkien tile sets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'working folder/Assets/**'
+      - 'tilesets.json'
+      - 'scripts/**'
+      - 'tests/**'
+      - '.github/workflows/build-tilesets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-tolkien-tilesets
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          # Queued builds always use the latest approved masters on main.
+          ref: main
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+      - name: Install image builder
+        run: python -m pip install -r scripts/requirements.txt
+      - name: Test compositing and transparency
+        run: python -m unittest discover -s tests -v
+      - name: Build both tile sets
+        run: python scripts/build_tilesets.py
+      - name: Verify generated packs and road joins
+        run: |
+          python scripts/build_tilesets.py --check
+          python scripts/validate_tilesets.py
+      - name: Commit regenerated files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- Tolkien 'Tolkien (transparent)'
+          if git diff --cached --quiet; then
+            echo 'Both tile sets are already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Rebuild Tolkien background tile sets from approved masters'
+          git push origin HEAD:main
