@@ -5,5 +5,6 @@
 - `terrain-hill.png`: approved quill-ink rolling hills foreground with transparency.
 - `terrain-shallow.png`: approved marsh strokes and dots foreground with transparency.
 - `terrain-mountain.png`: approved dark ink mountain foreground with chalk-white ridge highlights and transparency.
+- `terrain-water.png`: approved six large quill-ink ripples with transparency, designed for readability when zoomed out.
 
 Keep the parchment unchanged when composing other terrain tiles.
