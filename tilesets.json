@@ -1,6 +1,7 @@
 {
   "size": 512,
   "source_directory": "working folder/Assets",
+  "colour_source_directory": "working folder/Assets-colour",
   "field": "terrain-field.png",
   "tiles": {
     "terrain-field.png": "terrain-field.png",

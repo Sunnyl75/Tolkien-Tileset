@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the two background-only MMapper packs from approved master PNGs."""
+"""Build the four background-only MMapper packs from approved master PNGs."""
 
 from __future__ import annotations
 
@@ -15,7 +15,13 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKS = {"Tolkien": False, "Tolkien (transparent)": True}
+PACKS = {
+    "Tolkien": False,
+    "Tolkien (transparent)": True,
+    "Tolkien - colour": False,
+    "Tolkien - colour - transparent": True,
+}
+COLOUR_PACKS = {"Tolkien - colour", "Tolkien - colour - transparent"}
 PNG_NAME = re.compile(r"(?:terrain|road)-[a-z]+\.png\Z")
 
 
@@ -65,27 +71,38 @@ def prepare(root: Path) -> tuple[dict[str, dict[str, bytes]], dict]:
     source_dir = (root / config["source_directory"]).resolve()
     if not source_dir.is_relative_to(root.resolve()):
         raise ValueError("Master directory must be inside the repository")
-    images, sources = {}, {}
-    for name in sorted(set(tiles.values())):
-        path = source_dir / name
-        data = path.read_bytes()
-        with Image.open(io.BytesIO(data)) as source:
-            if source.format != "PNG" or source.width != source.height or source.width < size:
-                raise ValueError(f"{path}: expected square PNG at least {size} pixels wide")
-            if name != field and "A" not in source.getbands():
-                raise ValueError(f"{path}: foreground master must have an alpha channel")
-            images[name] = source.convert("RGBA")
-        sources[path.relative_to(root).as_posix()] = sha256(data)
-    parchment = images[field]
-    if parchment.getchannel("A").getextrema() != (255, 255):
-        raise ValueError("Field parchment must be fully opaque")
-    for name, image in images.items():
-        if image.size != parchment.size:
-            raise ValueError(f"{name}: master canvas must match Field {parchment.size}")
-        if name != field and image.getchannel("A").getextrema()[0] != 0:
-            raise ValueError(f"{name}: foreground must have a transparent background")
+    def load_sources(directory: Path) -> tuple[dict, dict]:
+        if not directory.is_relative_to(root.resolve()):
+            raise ValueError("Master directory must be inside the repository")
+        images, sources = {}, {}
+        for name in sorted(set(tiles.values())):
+            # All packs share the exact approved original Field parchment.
+            path = (source_dir if name == field else directory) / name
+            data = path.read_bytes()
+            with Image.open(io.BytesIO(data)) as source:
+                if source.format != "PNG" or source.width != source.height or source.width < size:
+                    raise ValueError(f"{path}: expected square PNG at least {size} pixels wide")
+                if name != field and "A" not in source.getbands():
+                    raise ValueError(f"{path}: foreground master must have an alpha channel")
+                images[name] = source.convert("RGBA")
+            sources[path.relative_to(root).as_posix()] = sha256(data)
+        parchment = images[field]
+        if parchment.getchannel("A").getextrema() != (255, 255):
+            raise ValueError("Field parchment must be fully opaque")
+        for name, image in images.items():
+            if image.size != parchment.size:
+                raise ValueError(f"{name}: master canvas must match Field {parchment.size}")
+            if name != field and image.getchannel("A").getextrema()[0] != 0:
+                raise ValueError(f"{name}: foreground must have a transparent background")
+        return images, sources
+
+    original = load_sources(source_dir)
+    colour_dir = (root / config.get("colour_source_directory", config["source_directory"])).resolve()
+    colour = original if colour_dir == source_dir else load_sources(colour_dir)
     result = {}
     for pack, transparent in PACKS.items():
+        images, sources = colour if pack in COLOUR_PACKS else original
+        parchment = images[field]
         cached = {}
         outputs = {}
         for target, source in sorted(tiles.items()):

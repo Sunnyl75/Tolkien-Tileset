@@ -7,9 +7,11 @@ Tolkien-inspired terrain tiles for MUME and MMapper background maps.
 | --- | --- |
 | [Tolkien/pixmaps](Tolkien/pixmaps) | 512 × 512 opaque PNGs. Each foreground is laid over the approved Field parchment at full master resolution, then reduced. Field is the parchment itself. |
 | [Tolkien (transparent)/pixmaps](<Tolkien (transparent)/pixmaps>) | 512 × 512 RGBA PNGs containing foreground ink only. Field is completely transparent, ready for a separate large parchment layer underneath the map. |
+| [Tolkien - colour/pixmaps](<Tolkien - colour/pixmaps>) | Approved colour foregrounds over the same Field parchment, composited before reducing to 512 × 512 opaque PNGs. |
+| [Tolkien - colour - transparent/pixmaps](<Tolkien - colour - transparent/pixmaps>) | Approved colour foregrounds at 512 × 512 with alpha transparency and a completely blank Field. |
 
 In MMapper's **Preferences → Background Map**, select **Separate custom tile pack**
-and choose either tile-set folder, or its `pixmaps` subfolder. The transparent
+and choose a tile-set folder, or its `pixmaps` subfolder. The transparent
 pack supplies alpha artwork; a large parchment underlay is a separate rendering
 feature, not an image included in this pack.
 
@@ -27,19 +29,23 @@ trail overlays, so they are not included in these background-only exports.
 ## Approved masters and automatic regeneration
 
 The original, full-resolution approved files remain in
-[`working folder/Assets`](<working folder/Assets>). They are never resized,
+[`working folder/Assets`](<working folder/Assets>) and the approved colour variants
+in [`working folder/Assets-colour`](<working folder/Assets-colour>). They are never resized,
 rewritten or composited in place. [`tilesets.json`](tilesets.json) explicitly maps
-approved masters to export filenames; unlisted files do not enter either pack.
+approved masters to export filenames; unlisted files do not enter the packs.
+The colour packs read their foregrounds from `Assets-colour`; every pack shares
+the original Field parchment. The original brown packs keep their original sources.
 
 The [Build Tolkien tile sets workflow](https://github.com/Sunnyl75/Tolkien-Tileset/actions/workflows/build-tilesets.yml)
 automatically runs when masters, the mapping or build code change on `main`.
 It can also be started with **Actions → Build Tolkien tile sets → Run workflow**.
-It tests the builder, rebuilds both packs and commits changed exports back to
+It tests the builder, rebuilds all four packs and commits changed exports back to
 `main`. Generated-only commits do not trigger another build. Builds are
 serialized, and a non-fast-forward push fails rather than overwriting newer work.
 
-To replace approved artwork, update its existing master PNG on `main`. To add a
-new approved tile, add its master and an entry in `tilesets.json`. The size is
+To replace approved artwork, update its existing master PNG in the appropriate
+source folder on `main`. To add a new approved tile, add its masters and an entry
+in `tilesets.json`. The size is
 set once in that file, currently **512 pixels square**. Future exports can be
 regenerated at another size without altering the masters.
 

@@ -13,8 +13,9 @@ def validate() -> None:
     config = json.loads((ROOT / "tilesets.json").read_text(encoding="utf-8"))
     expected = set(config["tiles"])
     dimensions = (config["size"], config["size"])
-    roads = {}
+    road_sets = {}
     for pack, transparent in PACKS.items():
+        roads = {}
         folder = ROOT / pack
         report = json.loads((folder / "build-manifest.json").read_text(encoding="utf-8"))
         actual = {path.name for path in (folder / "pixmaps").glob("*.png")}
@@ -41,11 +42,18 @@ def validate() -> None:
         assert (folder / "pixmaps/terrain-road.png").read_bytes() == (
             folder / "pixmaps/road-none.png"
         ).read_bytes(), f"{pack}: generic road alias differs"
+        if transparent:
+            road_sets[pack] = roads
 
+    connectors = sum(validate_roads(roads, dimensions[0]) for roads in road_sets.values())
+    print(f"Validated all {len(PACKS)} {dimensions[0]} px packs and "
+          f"{connectors} matching road edge profiles.")
+
+
+def validate_roads(roads: dict, size: int) -> int:
     required = {"none", "n", "e", "s", "w", "ns", "ew", "ne", "es", "sw", "nw",
                 "nes", "new", "esw", "nsw", "all"}
     assert set(roads) == required, "Expected all 16 road configurations"
-    size = dimensions[0]
     edges = {
         "n": (0, 0, size, 1), "s": (0, size - 1, size, size),
         "w": (0, 0, 1, size), "e": (size - 1, 0, size, size),
@@ -67,7 +75,7 @@ def validate() -> None:
             else:
                 profiles[axis] = profile
             connectors += 1
-    print(f"Validated both {dimensions[0]} px packs and {connectors} matching road edge profiles.")
+    return connectors
 
 
 if __name__ == "__main__":

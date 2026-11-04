@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'working folder/Assets/**'
+      - 'working folder/Assets-colour/**'
       - 'tilesets.json'
       - 'scripts/**'
       - 'tests/**'
@@ -36,7 +37,7 @@ jobs:
         run: python -m pip install -r scripts/requirements.txt
       - name: Test compositing and transparency
         run: python -m unittest discover -s tests -v
-      - name: Build both tile sets
+      - name: Build all four tile sets
         run: python scripts/build_tilesets.py
       - name: Verify generated packs and road joins
         run: |
@@ -46,9 +47,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git add -- Tolkien 'Tolkien (transparent)'
+          git add -- Tolkien 'Tolkien (transparent)' 'Tolkien - colour' 'Tolkien - colour - transparent'
           if git diff --cached --quiet; then
-            echo 'Both tile sets are already current.'
+            echo 'All four tile sets are already current.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'

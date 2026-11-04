@@ -1,5 +1,6 @@
 import hashlib
 import importlib.util
+import io
 import json
 from pathlib import Path
 import tempfile
@@ -78,6 +79,43 @@ class RepositoryBuildTests(unittest.TestCase):
         path.write_bytes(b"edited output")
         self.assertFalse(builder.build(self.root, check=True))
         self.assertEqual(path.read_bytes(), b"edited output")
+
+    def test_colour_sources_are_separate_and_share_original_field(self):
+        colour_dir = self.root / "working folder/Assets-colour"
+        colour_dir.mkdir()
+        ink = Image.new("RGBA", (8, 8), (0, 0, 0, 0))
+        ink.putpixel((4, 4), (20, 90, 40, 255))
+        ink.save(colour_dir / "terrain-forest.png")
+        config_path = self.root / "tilesets.json"
+        config = json.loads(config_path.read_text())
+        config["colour_source_directory"] = "working folder/Assets-colour"
+        config_path.write_text(json.dumps(config))
+        packs, _ = builder.prepare(self.root)
+        def pixel(pack):
+            with Image.open(io.BytesIO(packs[pack]["pixmaps/terrain-forest.png"])) as image:
+                return image.getpixel((2, 2))
+        brown = pixel("Tolkien (transparent)")
+        green = pixel("Tolkien - colour - transparent")
+        self.assertGreater(brown[0], brown[1])
+        self.assertGreater(green[1], green[0])
+        self.assertEqual(packs["Tolkien"]["pixmaps/terrain-field.png"],
+                         packs["Tolkien - colour"]["pixmaps/terrain-field.png"])
+        self.assertEqual(packs["Tolkien (transparent)"]["pixmaps/terrain-field.png"],
+                         packs["Tolkien - colour - transparent"]["pixmaps/terrain-field.png"])
+        report = json.loads(packs["Tolkien - colour"]["build-manifest.json"])
+        self.assertIn("working folder/Assets-colour/terrain-forest.png", report["source_sha256"])
+        self.assertIn("working folder/Assets/terrain-field.png", report["source_sha256"])
+
+    def test_missing_colour_master_fails_before_any_outputs_are_written(self):
+        colour_dir = self.root / "working folder/Assets-colour"
+        colour_dir.mkdir()
+        config_path = self.root / "tilesets.json"
+        config = json.loads(config_path.read_text())
+        config["colour_source_directory"] = "working folder/Assets-colour"
+        config_path.write_text(json.dumps(config))
+        with self.assertRaises(FileNotFoundError):
+            builder.build(self.root)
+        self.assertFalse(any((self.root / pack).exists() for pack in builder.PACKS))
 
 
 if __name__ == "__main__":
