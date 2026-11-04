@@ -6,5 +6,6 @@
 - `terrain-shallow.png`: approved marsh strokes and dots foreground with transparency.
 - `terrain-mountain.png`: approved dark ink mountain foreground with chalk-white ridge highlights and transparency.
 - `terrain-water.png`: approved six large quill-ink ripples with transparency, designed for readability when zoomed out.
+- `terrain-brush.png`: approved low, open quill-ink scrub clumps with transparency.
 
 Keep the parchment unchanged when composing other terrain tiles.
